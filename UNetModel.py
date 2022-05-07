@@ -98,7 +98,8 @@ class UNet(nn.Module):
         # x16 = F.interpolate(x15,(720,1280))
         x18 = F.interpolate(x17,(180,330))
         # return x16
-        return torch.sigmoid(x18)
+        # return torch.sigmoid(x18)
+        return x18
 
     def double_conv(self,in_c,out_c,k_size=3):
         conv_double = nn.Sequential(

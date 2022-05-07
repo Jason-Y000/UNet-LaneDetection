@@ -84,20 +84,20 @@ def predict_lanes(frame,unet):
     frame_copy = np.append(frame_copy,test_edges_inv.reshape(test_edges_inv.shape[0],test_edges_inv.shape[1],1),axis=2)
     frame_copy = cv2.resize(frame_copy,(330,180))
 
-    # input = torch.Tensor((frame_copy/255.).transpose(2,0,1)).reshape(1,5,180,330)
-    x = (frame_copy/255.).transpose(2,0,1).reshape(1,5,180,330).astype(np.float32)
+    input = torch.Tensor((frame_copy/255.).transpose(2,0,1)).reshape(1,5,180,330)
+    # x = (frame_copy/255.).transpose(2,0,1).reshape(1,5,180,330).astype(np.float32)
 
     # input = torch.Tensor((cv2.cvtColor(input_img_copy,cv2.COLOR_BGR2GRAY)/255.).reshape(1,1,180,330))
-    ort_sess = ort.InferenceSession('/Users/jasonyuan/Desktop/unet_with_sigmoid.onnx')
-    output = ort_sess.run(None, {'Inputs': x})[0]
+    # ort_sess = ort.InferenceSession('/Users/jasonyuan/Desktop/unet_with_sigmoid.onnx')
+    # output = ort_sess.run(None, {'Inputs': x})[0]
 
-    # unet.eval()
-    # output = unet(input)
+    unet.eval()
+    output = unet(input)
     # print(output)
     # print(unet)
 
-    # output = torch.sigmoid(output)
-    # output = output.detach().numpy()
+    output = torch.sigmoid(output)
+    output = output.detach().numpy()
     pred_mask = np.where(output>0.5,1,0)
 
     # print(output)
@@ -117,7 +117,7 @@ def predict_lanes(frame,unet):
     # cv2.imshow("Overlayed", overlayed_mask)
     # cv2.waitKey(0)
 
-    return overlayed_mask,test_edges
+    return overlayed_mask,pred_mask
 
 def sortkey(x):
     if x == ".DS_Store":
@@ -134,12 +134,14 @@ if __name__=="__main__":
     unet.load_state_dict(torch.load("/Users/jasonyuan/Desktop/UNet Weights/unet_model_batch64_scheduled_lr0.05_epochs40_e14_best.pt",map_location=torch.device("cpu")))
 
 
-    frame = cv2.imread("/Users/jasonyuan/Desktop/road.jpg")
-    annotated,edges= predict_lanes(frame,unet)
+    frame = cv2.imread("/Users/jasonyuan/Desktop/UTRA:Projects/ART stuff/lane_dataset grass/image_rect_color_screenshot_09.12.2017 8.png")
+    annotated, pred = predict_lanes(frame,unet)
+
+    cv2.imwrite("/Users/jasonyuan/Desktop/Test2.png",pred*255)
 
     cv2.imshow("Annotated",annotated)
     cv2.imshow("Og",frame)
-    cv2.imshow("Edge",edges)
+    cv2.imshow("Pred",pred)
     cv2.waitKey(0)
 
     # out = cv2.VideoWriter('/Users/jasonyuan/Desktop/Processed_Lane_vid_2.mp4',cv2.VideoWriter_fourcc(*'mp4v'), 10, (640,360))
