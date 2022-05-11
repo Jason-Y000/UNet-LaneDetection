@@ -134,10 +134,10 @@ if __name__=="__main__":
     unet.load_state_dict(torch.load("/Users/jasonyuan/Desktop/UNet Weights/unet_model_batch64_scheduled_lr0.05_epochs40_e14_best.pt",map_location=torch.device("cpu")))
 
 
-    frame = cv2.imread("/Users/jasonyuan/Desktop/UTRA:Projects/ART stuff/lane_dataset grass/image_rect_color_screenshot_09.12.2017 8.png")
+    frame = cv2.imread("/Users/jasonyuan/Desktop/UTRA:Projects/ART stuff/lane_dataset grass/image_rect_color_screenshot_09.12.2017 23.png")
     annotated, pred = predict_lanes(frame,unet)
 
-    cv2.imwrite("/Users/jasonyuan/Desktop/Test2.png",pred*255)
+    cv2.imwrite("/Users/jasonyuan/Desktop/Test9.png",pred*255)
 
     cv2.imshow("Annotated",annotated)
     cv2.imshow("Og",frame)

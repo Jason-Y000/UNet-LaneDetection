@@ -62,7 +62,7 @@ class UNet(nn.Module):
         x5_pool = self.max_pool(x5)
         x6 = self.conv_down6(x5_pool)     # Output from sixth double conv
 
-        # print(x6.shape)
+        print(x6.shape)
         # Decoder
         # Decoder first layer
         x7 = self.upsample1(x6)
@@ -362,15 +362,15 @@ if __name__ == "__main__":
     # print(out.shape)
     # print(out)
 
-    torch.onnx.export(model,
-                     dummy_input,
-                     "/Users/jasonyuan/Desktop/unet_new.onnx",
-                     opset_version=11,
-                     do_constant_folding=True,
-                     input_names=["Inputs"],
-                     output_names=["Outputs"])
-
-    print("Onnx conversion complete")
+    # torch.onnx.export(model,
+    #                  dummy_input,
+    #                  "/Users/jasonyuan/Desktop/unet_new.onnx",
+    #                  opset_version=11,
+    #                  do_constant_folding=True,
+    #                  input_names=["Inputs"],
+    #                  output_names=["Outputs"])
+    #
+    # print("Onnx conversion complete")
 
 #     # test_tensor = torch.randn((5,3,160,240))
 #     # unet = UNet2()

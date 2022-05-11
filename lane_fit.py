@@ -3,8 +3,9 @@ import numpy as np
 from sklearn.cluster import DBSCAN
 from scipy import interpolate
 import matplotlib.pyplot as plt
+import time
 
-img_pth = '/Users/jasonyuan/Desktop/Test.png'
+img_pth = '/Users/jasonyuan/Desktop/Test9.png'
 
 # Add later to catch RankWarning
 # import numpy as np
@@ -33,7 +34,15 @@ def lane_fitting(points):
     ''' Fitting lanes to a function with a variation on the sliding windows '''
 
     fit_points = []
-    sorted_points = sorted(points,key=lambda x:x[1])
+    sorted_points_x = sorted(points,key=lambda x:x[1])
+    sorted_points_y = sorted(points,key=lambda x:x[0])
+
+    x_width = abs(sorted_points_x[-1][1] - sorted_points_x[0][1])
+    y_width = abs(sorted_points_y[-1][0] - sorted_points_y[0][0])
+
+    if (x_width < 15) or (y_width < 15):    # Hard-coded parameter, update maybe
+        return [[],[]]
+
     # print(sorted_points)
     pts_added = 0
     total_pts = len(points)
@@ -54,21 +63,27 @@ def lane_fitting(points):
         sigma_x = np.sqrt(np.sum(np.power(group[:,1]-x_avg,2))/group.shape[0])
         sigma_y = np.sqrt(np.sum(np.power(group[:,0]-y_avg,2))/group.shape[0])
 
-        print(sigma_x, sigma_y)
+        # print(sigma_x, sigma_y)
 
         if (sigma_x < 5) and (sigma_y < 5):
             fit_points.append([y_avg,x_avg])
 
+    if len(fit_points) == 0:
+        return [[],[]]
+
     fit_points = np.array(fit_points)
     # print(fit_points)
-    # fit_points = np.array(points)
+
     x = fit_points[:,1]
     y = fit_points[:,0]
     tck,u = interpolate.splprep([x,y],k=3,s=32)
+    # print(tck)
     out = interpolate.splev(u,tck)
     return out
 
 if __name__ == "__main__":
+    # start = time.perf_counter()
+
     input = cv2.imread(img_pth, cv2.IMREAD_GRAYSCALE)
     input_norm = input/255
 
@@ -76,7 +91,7 @@ if __name__ == "__main__":
     cols = np.where(input_norm==1)[1].reshape(-1,1)
     coords = np.concatenate((rows,cols),axis=1)     # (y,x) points
 
-    clustering = DBSCAN(eps=5, min_samples=20).fit(coords)
+    clustering = DBSCAN(eps=15, min_samples=30).fit(coords)
     labels = clustering.labels_
 
     for i,pt in enumerate(coords):
@@ -114,5 +129,9 @@ if __name__ == "__main__":
             # print(out[0])
             # print(out[1])
             plt.plot(out[0],out[1],c='k')
+            plt.gca().invert_yaxis()
 
     plt.show()
+
+    # end = time.perf_counter()
+    # print(end-start)
