@@ -1,5 +1,6 @@
 from UNetModel import UNet
 from UNet_Mask_Label_Gen import define_region_of_interest
+from lane_fit import *
 import torch
 import cv2
 import numpy as np
@@ -10,7 +11,7 @@ import time
 import onnx
 import onnxruntime as ort
 
-video_path = "/Users/jasonyuan/Desktop/output_video.mp4"
+video_path = "/Users/jasonyuan/Desktop/uoft-lanes-1.mp4"
 # video_path = "/Users/jasonyuan/Desktop/Section_of_dashcam.mp4"
 save_path = "/Users/jasonyuan/Desktop/Processed Frames"
 image_path = "/Users/jasonyuan/Desktop/Seattle Lane Driving Data"
@@ -126,109 +127,136 @@ def sortkey(x):
         return int(x.split(".")[0].split("Lane")[1])
 
 if __name__=="__main__":
-    # cap = cv2.VideoCapture(video_path)
-    frame_rate = 1
+    cap = cv2.VideoCapture(video_path)
+    frame_rate = 30
     prev = 0
     n = 0
     unet = UNet()
-    unet.load_state_dict(torch.load("/Users/jasonyuan/Desktop/UNet Weights/unet_model_batch64_scheduled_lr0.05_epochs40_e14_best.pt",map_location=torch.device("cpu")))
+    unet.load_state_dict(torch.load("/Users/jasonyuan/Desktop/UNet Weights/unet_model_batch64_scheduled_lr0.05_epochs30_v2.pt",map_location=torch.device("cpu")))
 
-
-    frame = cv2.imread("/Users/jasonyuan/Desktop/UTRA:Projects/ART stuff/lane_dataset grass/image_rect_color_screenshot_09.12.2017 23.png")
-    annotated, pred = predict_lanes(frame,unet)
-
-    cv2.imwrite("/Users/jasonyuan/Desktop/Test9.png",pred*255)
-
-    cv2.imshow("Annotated",annotated)
-    cv2.imshow("Og",frame)
-    cv2.imshow("Pred",pred)
-    cv2.waitKey(0)
+    # frame = cv2.imread("/Users/jasonyuan/Desktop/Testing.png")
+    # annotated, pred = predict_lanes(frame,unet)
+    #
+    # cv2.imwrite("/Users/jasonyuan/Desktop/Test_mask.png",pred*255)
+    #
+    # cv2.imshow("Annotated",annotated)
+    # cv2.imshow("Og",frame)
+    # cv2.imshow("Pred",pred)
+    # cv2.waitKey(0)
 
     # out = cv2.VideoWriter('/Users/jasonyuan/Desktop/Processed_Lane_vid_2.mp4',cv2.VideoWriter_fourcc(*'mp4v'), 10, (640,360))
-    #
-    # # for file in sorted(os.listdir(image_path),key=sortkey):
-    # #     if file == ".DS_Store":
-    # #         continue
-    # #     print(file)
-    # #     frame = cv2.imread(os.path.join(image_path,file))
-    # #     annotated = predict_lanes(frame,unet)
-    # #     out.write(cv2.resize(annotated,(640,360),interpolation=cv2.INTER_AREA))
-    #
-    # start = time.time()
-    # while cap.isOpened():
-    #     time_elapsed = time.time() - prev
-    #     if time_elapsed > 1./frame_rate:
-    #         prev = time.time()
-    #         ret,frame = cap.read()
-    #         if ret == False:
-    #             print("ret was False")
-    #             break
-    #
-    #         overlayed_mask = predict_lanes(frame,unet)
-    #         out.write(cv2.resize(overlayed_mask,(640,360),interpolation=cv2.INTER_AREA))
-    #
-    #         # frame = cv2.resize(frame,(1280,720),interpolation=cv2.INTER_AREA)
-    #         # frame_copy = np.copy(frame)
-    #         # # roi2,M2,M_inv2 = define_region_of_interest(frame)
-    #         # # roi,M,M_inv = define_region_of_interest(frame_copy)
-    #         # # print(roi.shape)
-    #         # # roi = cv2.cvtColor(roi,cv2.COLOR_BGR2GRAY)
-    #         # # roi = roi.reshape(1,1,180,330)
-    #         # # roi = roi/255.
-    #         # # input = torch.Tensor(roi)
-    #         #
-    #         # test_edges,test_edges_inv = find_edge_channel2(frame_copy)
-    #         #
-    #         # frame_copy = np.append(frame_copy,test_edges.reshape(test_edges.shape[0],test_edges.shape[1],1),axis=2)
-    #         # frame_copy = np.append(frame_copy,test_edges_inv.reshape(test_edges_inv.shape[0],test_edges_inv.shape[1],1),axis=2)
-    #         #
-    #         # frame_copy = cv2.resize(frame_copy,(330,180))
-    #         #
-    #         # input = (torch.Tensor(frame_copy/255.).permute(2,0,1)).reshape(1,5,180,330)
-    #         #
-    #         # # input = torch.Tensor((cv2.cvtColor(input_img_copy,cv2.COLOR_BGR2GRAY)/255.).reshape(1,1,180,330))
-    #         #
-    #         # unet.eval()
-    #         # output = unet(input)
-    #         # # print(output)
-    #         # # print(unet)
-    #         #
-    #         # output = torch.sigmoid(output)
-    #         # output = output.detach().numpy()
-    #         # pred_mask = np.where(output>0.5,1,0)
-    #         #
-    #         # # print(output)
-    #         # # print(ground_truth.shape)
-    #         # # print(pred_mask.size())
-    #         # pred_mask = (pred_mask.squeeze(0)).transpose(1,2,0).squeeze().astype('float32')
-    #         # # pred_mask = cv2.resize(pred_mask,(1280,720),interpolation=cv2.INTER_AREA)
-    #         #
-    #         # overlayed_mask = cv2.resize(np.copy(frame),(330,180),interpolation=cv2.INTER_AREA)
-    #         # # overlayed_mask = np.copy(frame)
-    #         # overlayed_mask[np.where(pred_mask==1)[0],np.where(pred_mask==1)[1],2] = 255
-    #         # overlayed_mask[np.where(pred_mask==1)[0],np.where(pred_mask==1)[1],1] = 0
-    #         # overlayed_mask[np.where(pred_mask==1)[0],np.where(pred_mask==1)[1],0] = 0
-    #         # # overlayed_mask = cv2.warpPerspective(overlayed_mask,M_inv2,(1280,720),cv2.INTER_LINEAR)
-    #         #
-    #         # # overlayed = np.copy(frame)
-    #         # # overlayed[np.where(overlayed_mask != [0,0,0])] = overlayed_mask[np.where(overlayed_mask != [0,0,0])]
-    #         # # overlayed = cv2.resize(overlayed,(1280,720),interpolation=cv2.INTER_AREA)
-    #         #
-    #         # # cv2.imshow("Video",frame)
-    #         # # cv2.imshow("Edges",test_edges)
-    #         # cv2.imshow("Annotated",cv2.resize(overlayed_mask,(640,360),interpolation=cv2.INTER_AREA))
-    #         # if cv2.waitKey(1) & 0xFF == ord('q'):
-    #         #     break
-    #
-    #         # cv2.imwrite(os.path.join(save_path,"Frame_{}.png".format(n)),overlayed_mask)
-    #         # n += 1
-    #
-    # end = time.time()
-    #
-    # print("Total Processing time: {}".format(end-start))
-    #
+
+    # for file in sorted(os.listdir(image_path),key=sortkey):
+    #     if file == ".DS_Store":
+    #         continue
+    #     print(file)
+    #     frame = cv2.imread(os.path.join(image_path,file))
+    #     annotated = predict_lanes(frame,unet)
+    #     out.write(cv2.resize(annotated,(640,360),interpolation=cv2.INTER_AREA))
+
+    start = time.time()
+
+    while cap.isOpened():
+        # time_elapsed = time.time() - prev
+        # if time_elapsed > 1./frame_rate:
+        #     prev = time.time()
+
+        ret,frame = cap.read()
+        if (cv2.waitKey(5) & 0xFF) == ord('q'):
+            continue
+
+        if ret == False:
+            print("ret was False")
+            break
+
+        _,pred = predict_lanes(frame,unet)
+        smoothed_pred = cv2.morphologyEx(pred, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT,(3,3)))
+        all_fit_points = gen_fit_points((smoothed_pred*255).astype(np.uint8))
+
+        overlayed_mask = cv2.resize(frame,(pred.shape[1],pred.shape[0]),interpolation=cv2.INTER_AREA)
+        contour = []
+        for set in all_fit_points:
+            x_set = set[0]
+            y_set = set[1]
+            for x,y in zip(x_set,y_set):
+                contour.append([x,y])
+            contour = np.array(contour,dtype=np.int32)
+            contour = [contour.reshape(-1,1,2)]
+
+            cv2.polylines(overlayed_mask,contour,False,(0,0,255),3)
+            contour = []
+
+        # cv2.imwrite("/Users/jasonyuan/Desktop/Masks/Test{}.png".format(n),pred*255)
+        # cv2.imwrite("/Users/jasonyuan/Desktop/Masks/Test_Overlay{}.png".format(n),overlayed_mask)
+        # n += 1
+        cv2.imshow("Annotated",overlayed_mask)
+        cv2.imshow("Pred",pred)
+
+
+            # out.write(cv2.resize(overlayed_mask,(640,360),interpolation=cv2.INTER_AREA))
+
+            # frame = cv2.resize(frame,(1280,720),interpolation=cv2.INTER_AREA)
+            # frame_copy = np.copy(frame)
+            # # roi2,M2,M_inv2 = define_region_of_interest(frame)
+            # # roi,M,M_inv = define_region_of_interest(frame_copy)
+            # # print(roi.shape)
+            # # roi = cv2.cvtColor(roi,cv2.COLOR_BGR2GRAY)
+            # # roi = roi.reshape(1,1,180,330)
+            # # roi = roi/255.
+            # # input = torch.Tensor(roi)
+            #
+            # test_edges,test_edges_inv = find_edge_channel2(frame_copy)
+            #
+            # frame_copy = np.append(frame_copy,test_edges.reshape(test_edges.shape[0],test_edges.shape[1],1),axis=2)
+            # frame_copy = np.append(frame_copy,test_edges_inv.reshape(test_edges_inv.shape[0],test_edges_inv.shape[1],1),axis=2)
+            #
+            # frame_copy = cv2.resize(frame_copy,(330,180))
+            #
+            # input = (torch.Tensor(frame_copy/255.).permute(2,0,1)).reshape(1,5,180,330)
+            #
+            # # input = torch.Tensor((cv2.cvtColor(input_img_copy,cv2.COLOR_BGR2GRAY)/255.).reshape(1,1,180,330))
+            #
+            # unet.eval()
+            # output = unet(input)
+            # # print(output)
+            # # print(unet)
+            #
+            # output = torch.sigmoid(output)
+            # output = output.detach().numpy()
+            # pred_mask = np.where(output>0.5,1,0)
+            #
+            # # print(output)
+            # # print(ground_truth.shape)
+            # # print(pred_mask.size())
+            # pred_mask = (pred_mask.squeeze(0)).transpose(1,2,0).squeeze().astype('float32')
+            # # pred_mask = cv2.resize(pred_mask,(1280,720),interpolation=cv2.INTER_AREA)
+            #
+            # overlayed_mask = cv2.resize(np.copy(frame),(330,180),interpolation=cv2.INTER_AREA)
+            # # overlayed_mask = np.copy(frame)
+            # overlayed_mask[np.where(pred_mask==1)[0],np.where(pred_mask==1)[1],2] = 255
+            # overlayed_mask[np.where(pred_mask==1)[0],np.where(pred_mask==1)[1],1] = 0
+            # overlayed_mask[np.where(pred_mask==1)[0],np.where(pred_mask==1)[1],0] = 0
+            # # overlayed_mask = cv2.warpPerspective(overlayed_mask,M_inv2,(1280,720),cv2.INTER_LINEAR)
+            #
+            # # overlayed = np.copy(frame)
+            # # overlayed[np.where(overlayed_mask != [0,0,0])] = overlayed_mask[np.where(overlayed_mask != [0,0,0])]
+            # # overlayed = cv2.resize(overlayed,(1280,720),interpolation=cv2.INTER_AREA)
+            #
+            # # cv2.imshow("Video",frame)
+            # # cv2.imshow("Edges",test_edges)
+            # cv2.imshow("Annotated",cv2.resize(overlayed_mask,(640,360),interpolation=cv2.INTER_AREA))
+            # if cv2.waitKey(1) & 0xFF == ord('q'):
+            #     break
+
+            # cv2.imwrite(os.path.join(save_path,"Frame_{}.png".format(n)),overlayed_mask)
+            # n += 1
+
+    end = time.time()
+
+    print("Total Processing time: {}".format(end-start))
+
     # out.release()
-    # cap.release()
+    cap.release()
     cv2.destroyAllWindows()
 
 

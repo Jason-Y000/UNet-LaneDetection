@@ -62,7 +62,6 @@ class UNet(nn.Module):
         x5_pool = self.max_pool(x5)
         x6 = self.conv_down6(x5_pool)     # Output from sixth double conv
 
-        print(x6.shape)
         # Decoder
         # Decoder first layer
         x7 = self.upsample1(x6)
@@ -350,7 +349,7 @@ class UNet_Prob(nn.Module):
         return cropped_image
 
 if __name__ == "__main__":
-    weight_pth = "/Users/jasonyuan/Desktop/UNet Weights/unet_model_batch64_scheduled_lr0.05_epochs40_e14_best.pt"
+    weight_pth = "/Users/jasonyuan/Desktop/unet_model_batch64_scheduled_lr0.05_epochs30_v2.pt"
 
     model = UNet()
     model.load_state_dict(torch.load(weight_pth,map_location=torch.device("cpu")))
@@ -364,7 +363,7 @@ if __name__ == "__main__":
 
     # torch.onnx.export(model,
     #                  dummy_input,
-    #                  "/Users/jasonyuan/Desktop/unet_new.onnx",
+    #                  "/Users/jasonyuan/Desktop/unet_updated.onnx",
     #                  opset_version=11,
     #                  do_constant_folding=True,
     #                  input_names=["Inputs"],
